@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Hardened Image (DHI) Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Docker Hardened Image Demo</h1>
+            <p class="subtitle">Comparing Standard Base Images vs. DHI (The New Secure Standard)</p>
+        </header>
+
+        <div class="grid">
+            <!-- Environment Stats -->
+            <div class="card">
+                <h2>Environment Specs</h2>
+                <div class="card-content" id="env-stats">
+                    <p>Loading environmental data...</p>
+                </div>
+            </div>
+
+            <!-- Attack Surface Scan -->
+            <div class="card">
+                <h2>Attack Surface Scan</h2>
+                <div class="card-content">
+                    <p>Check if common exploitation tools are present in this container.</p>
+                    <button onclick="runScan()">Run Diagnostic Scan</button>
+                    <div id="scan-results" style="margin-top: 1rem;"></div>
+                </div>
+            </div>
+
+            <!-- DHI Features -->
+            <div class="card">
+                <h2>DHI Security Pillars</h2>
+                <div class="card-content">
+                    <div class="dhi-features">
+                        <div class="feature-tag">Near-Zero CVEs</div>
+                        <div class="feature-tag">SLSA Level 3</div>
+                        <div class="feature-tag">Signed SBOM</div>
+                        <div class="feature-tag">Drop-in Ease</div>
+                        <div class="feature-tag">Distroless</div>
+                        <div class="feature-tag">Non-root Default</div>
+                    </div>
+                    <p style="margin-top: 1rem; color: var(--text-muted); font-style: italic;">
+                        DHI provides a transparent supply chain for every developer.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal Output -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h2>Command Execution Diagnostic</h2>
+            <div class="card-content">
+                <p>Verify if the shell is accessible for arbitrary command execution.</p>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <input type="text" id="command-input" placeholder="e.g., whoami" style="flex: 1; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: #000; color: #fff;">
+                    <button onclick="runCommand()" style="width: auto; margin-top: 0;">Execute</button>
+                </div>
+                <pre id="command-output">Output will appear here...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchEnv() {
+            try {
+                const res = await fetch('/api/env');
+                const data = await res.json();
+                const containerType = data.user === 'root' ? 
+                    '<span class="badge badge-danger">High Risk (Root)</span>' : 
+                    '<span class="badge badge-success">Lower Risk (Non-root)</span>';
+                
+                document.getElementById('env-stats').innerHTML = `
+                    <div class="stat-item"><span class="label">OS Type</span><span class="value">${data.os}</span></div>
+                    <div class="stat-item"><span class="label">User</span><span class="value">${data.user}</span></div>
+                    <div class="stat-item"><span class="label">Security Context</span><span class="value">${containerType}</span></div>
+                    <div class="stat-item"><span class="label">Node Version</span><span class="value">${data.nodeVersion}</span></div>
+                    <div class="stat-item"><span class="label">Platform</span><span class="value">${data.platform} (${data.arch})</span></div>
+                `;
+            } catch (e) {
+                document.getElementById('env-stats').innerHTML = '<p style="color:red">Failed to load data.</p>';
+            }
+        }
+
+        async function runScan() {
+            const resultsDiv = document.getElementById('scan-results');
+            resultsDiv.innerHTML = '<p>Scanning binaries...</p>';
+            try {
+                const res = await fetch('/api/scan');
+                const data = await res.json();
+                resultsDiv.innerHTML = Object.entries(data).map(([tool, present]) => `
+                    <div class="stat-item">
+                        <span class="label">${tool}</span>
+                        <span class="value">${present ? 
+                            '<span class="badge badge-danger">PRESENT</span>' : 
+                            '<span class="badge badge-success">ABSENT</span>'}</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                resultsDiv.innerHTML = '<p style="color:red">Scan failed. (This is expected if the shell is missing in DHI)</p>';
+            }
+        }
+
+        async function runCommand() {
+            const cmd = document.getElementById('command-input').value;
+            const output = document.getElementById('command-output');
+            output.textContent = 'Executing...';
+            try {
+                const res = await fetch('/api/exec', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: cmd })
+                });
+                const data = await res.json();
+                output.textContent = data.stdout || data.stderr || data.error || 'No output.';
+            } catch (e) {
+                output.textContent = 'Fetch Error: The command failed because the underlying shell might be missing (DHI Pillar: Minimalism).';
+            }
+        }
+
+        fetchEnv();
+    </script>
+</body>
+</html>

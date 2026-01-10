@@ -1,82 +1,70 @@
-# Docker Hardened Images (DHI) Technical Demonstration
+# Docker Hardened Image (DHI) vs Standard Demo
 
-## Overview
+This demo application showcases the security benefits of migrating from standard base images to **Docker Hardened Images (DHI)**, following official best practices for supply chain security.
 
-This repository demonstrates the security transition from a standard containerized Node.js application to a hardened deployment using Docker Hardened Images (DHI). The demonstration features a "Security Health Dashboard" that visualizes the posture improvements achieved through hardening.
+## Key Features of DHI Demonstrated
+1.  **Minimalism**: Removal of shells (`sh`, `bash`) and package managers in the runtime.
+2.  **Secure Defaults**: Automatic non-root user configuration and hardened system settings.
+3.  **Governance**: Verifiable **SBOM** (Software Bill of Materials) and **Provenance** (SLSA Level 3).
+4.  **CVE Reduction**: Continuous monitoring and patching for near-zero vulnerabilities.
 
-## Technical Components
+## Project Structure
+- `Dockerfile.standard`: Uses a multi-stage build with `node:24`. The final stage is intentionally "fat".
+- `Dockerfile.hardened`: Follows the official DHI workflow with `dhi.io/node:24-dev` for building and `dhi.io/node:24` for runtime.
+- `app.js`: Express app with security diagnostic endpoints.
+- `public/`: Modern dashboard to visualize the comparisons.
 
-### Application Layer
-- **Backend**: Node.js Express server providing system and security metadata.
-- **Frontend**: Modern, responsive dashboard built with Vanilla CSS and JavaScript, designed for technical clarity and data visualization.
+## How to Run the Demo
 
-### Containerization Layer
-- **Standard Deployment**: Utilizes the standard `node:20-alpine` image as a baseline.
-- **Hardened Deployment**: Utilizes `dhi.io/node:20`, incorporating security-first configurations such as non-root execution and a minimal attack surface.
-
-## Security Transition Benefits
-
-The transition to Docker Hardened Images provides several critical security advantages:
-
-1. **Reduced Attack Surface**: DHIs are intentionally minimal, containing only the essential libraries required for the runtime. This significantly reduces the number of potential targets for exploitation.
-2. **Supply Chain Transparency**: Each DHI includes a signed Software Bill of Materials (SBOM) and provenance metadata, ensuring the integrity and origin of the image.
-3. **Continuous Remediation**: These images are continuously scanned and updated to maintain a near-zero exploitable CVE (Common Vulnerabilities and Exposures) status.
-4. **Secure-by-Default Configuration**: DHIs are pre-configured with security best practices, such as running applications as a non-root user and hardening OS kernel interfaces.
-
-## Deployment on AWS EC2 (Ubuntu)
-
-Follow these steps to deploy the demonstration on an Ubuntu-based AWS EC2 instance.
-
-### 1. Prerequisites
-Ensure your EC2 instance has Docker installed. If not, run the following:
+### 1. Build the Images
+Open your terminal in this directory and run:
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y docker.io
-sudo systemctl start docker
-sudo usermod -aG docker $USER && newgrp docker
+# Build the Standard (Vulnerable) Image
+docker build -f Dockerfile.standard -t dhi-demo:standard .
+
+# Build the Hardened (DHI) Image using official buildx flags
+docker buildx build -f Dockerfile.hardened -t dhi-demo:hardened \
+  --sbom=1 --provenance=1 --load .
 ```
 
-### 2. Network Configuration
-Ensure your EC2 Security Group allows inbound traffic on **Port 3000** (TCP) from your local IP address.
+### 2. Inspect Security Metadata (DHI)
+Unlike standard images, DHI allows you to inspect deep supply chain data:
 
-### 3. Repository Preparation
 ```bash
-git clone https://github.com/Amitabh-DevOps/docker-hardend-demo.git
-cd docker-hardend-demo
+# Inspect SBOM (Software Bill of Materials)
+docker buildx imagetools inspect dhi-demo:hardened --format "{{json .SBOM.SPDX}}"
+
+# Inspect Provenance (SLSA Level 3)
+docker buildx imagetools inspect dhi-demo:hardened --format "{{json .Provenance.SLSA}}"
 ```
 
-### 4. Build and Run Comparison
-
-#### Standard Image (Baseline)
-Build the standard image that demonstrates a typical attack surface:
+### 3. Run the Containers
 ```bash
-docker build -t dhi-demo:standard -f Dockerfile .
-docker run -d -p 3000:3000 --name standard-app dhi-demo:standard
+# Run Standard
+docker run -d -p 3001:3000 --name demo-standard dhi-demo:standard
+
+# Run Hardened
+docker run -d -p 3002:3000 --name demo-hardened dhi-demo:hardened
 ```
 
-#### Hardened Image (DHI)
-Build the hardened image using Docker Hardened Images:
+### 4. Explore the Dashboard
+Navigate to:
+- **Standard Image**: [http://localhost:3001](http://localhost:3001)
+- **Hardened Image**: [http://localhost:3002](http://localhost:3002)
+
+### 4. Comparison Exercises
+- **Attack Surface Scan**: Click "Run Diagnostic Scan". Observe how `sh`, `curl`, and `apt` are "Present" in Standard but "Absent" in Hardened.
+- **Command Execution**: Try running `whoami` or `ls`. In the DHI container, this will fail because there is no shell to interpret the command.
+- **User Check**: Observe the "User" field in Environment Specs. Standard defaults to `root`, while DHI defaults to `node`.
+
+## Verifying Supply Chain Security (DHI Specific)
+DHI images come with built-in metadata. You can verify this using Docker Scout:
+
 ```bash
-# Stop the previous container first
-docker stop standard-app && docker rm standard-app
+# View the SBOM (Software Bill of Materials)
+docker scout sbom dhi-demo:hardened
 
-docker build -t dhi-demo:hardened -f Dockerfile.hardened .
-docker run -d -p 3000:3000 --name hardened-app dhi-demo:hardened
+# Check for Vulnerabilities
+docker scout cve dhi-demo:hardened
 ```
-
-### 5. Accessing the Dashboard
-Open your web browser and navigate to:
-`http://<EC2_PUBLIC_IP>:3000`
-
-## Analysis and Comparison
-
-The Security Health Dashboard provides **Live Environment Introspection**. It does not rely on hardcoded labels; instead, it actively probes its own container environment to prove the hardened status:
-
-- **Permission Model**: Real-time verification of the execution UID (proves non-root status).
-- **Vulnerability Context**: Correlates image minimalism with reduced exploitable surface.
-- **Package Integrity**: Directly queries the package manager (or detects its absence) to confirm the minimal footprint.
-- **Binary Discovery**: Scans for high-risk binaries like shells (`sh`) and package managers (`apk`) to showcase the reduced attack surface.
-
----
-Technical documentation for secure container deployments.
