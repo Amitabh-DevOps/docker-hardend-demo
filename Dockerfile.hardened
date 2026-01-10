@@ -1,25 +1,25 @@
-# STAGE 1: Build environment
-# We use a standard image to install dependencies because hardened images often lack the shell (/bin/sh) required by npm/sh processes.
+# STAGE 1: THE KITCHEN (Build)
+# We use a standard image to prepare the meal (install dependencies).
 FROM node:22-slim AS build
 WORKDIR /app
 COPY app/package*.json ./
 RUN npm install --production
 
-# STAGE 2: Production environment (Hardened)
-# We transfer the pre-built application into the highly secure, shell-less DHI environment.
+# STAGE 2: THE VAULT (Runtime)
+# We move only the meal (application) into a secure vault.
+# This vault has no tools, no shell, and only one inhabitant (non-root).
 FROM dhi.io/node:25
-
-# Set working directory
 WORKDIR /app
 
-# Copy application and pre-installed dependencies from the build stage
-# DHI images use the 'node' user (UID 1000)
+# Copy only the results from the Kitchen
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node app/ .
 
-# Secure permissions
+# Switch to the single inhabitant
 USER node
 
-# Start the application using EXEC form (Avoids shell requirement)
+# Expose port
 EXPOSE 3000
+
+# Start the application
 CMD ["node", "index.js"]

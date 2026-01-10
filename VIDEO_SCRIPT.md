@@ -1,29 +1,21 @@
-# Video Script: Docker Hardened Images Comparison
+# Video Script: From Standard House to Secure Vault
 
-## Scene 1: Introduction (0:00 - 0:30)
-**Visual**: A screen displaying a high number of vulnerabilities found in a standard container scan.
-**Audio**: "Most standard Docker images contain significant security vulnerabilities before application code is even added. This video demonstrates how Docker Hardened Images, or DHI, can transform your security posture into a production-ready state."
+## Intro (0:00 - 0:30)
+**Visual**: A high-contrast UI showing "ROOT" and "SHELL FOUND" in red.
+**Audio**: "Most Docker containers are built like standard houses—totally functional, but with all the doors left open. Today, I'll show you how to transform this into a Secure Vault using Docker Hardened Images."
 
-## Scene 2: The Initial State (0:30 - 1:30)
-**Visual**: Displaying the standard Dockerfile.
-**Audio**: "Consider a typical Node.js configuration using a standard base image. While functional, it often runs as the root user and includes unnecessary system tools that expand the attack surface, such as package managers and shells."
-**Visual**: Running a vulnerability scan on the standard image.
-**Audio**: "A security scan of this image reveals numerous high and critical vulnerabilities. This represents the baseline risk associated with standard base images."
+## The Problem (0:30 - 1:15)
+**Visual**: Code view of Dockerfile.standard.
+**Audio**: "Our standard image runs as ROOT. That means anyone who gets in has total control. Plus, it includes a shell, which is the exact tool an attacker needs to explore your network."
 
-## Scene 3: Introduction to Hardened Images (1:30 - 2:00)
-**Visual**: The dhi.io website or technical documentation.
-**Audio**: "Docker Hardened Images are minimal, secure foundation images curate by Docker. They are designed to be minimal and consistently patched to remain free of known vulnerabilities while adhering to CIS benchmarks."
+## The Solution (1:15 - 2:00)
+**Visual**: Code view of Dockerfile.hardened.
+**Audio**: "To fix this, we use a Multi-Stage Build. Think of it like a Kitchen. We prepare our app in a standard environment, but we only serve the 'Meal' in this Secure Vault. We don't leave the knives or the stove in the vault."
 
-## Scene 4: The Hardened State (2:00 - 3:00)
-**Visual**: Displaying the hardened Dockerfile.
-**Audio**: "By switching to a hardened base image, several security improvements are achieved. The process now runs under a restricted non-root user, and the image is stripped of all non-essential binaries and shells."
-**Visual**: Running a vulnerability scan on the hardened image.
-**Audio**: "The resulting scan shows zero critical vulnerabilities. This configuration provides a verified, secured foundation for production workloads."
+## The Result (2:00 - 2:45)
+**Visual**: The UI switching to "NON-ROOT" and "LOCKED" in green.
+**Audio**: "Now look at the Result. No root user, no shell, and the footprint has dropped from 413 packages to just 13. We've removed 97% of the risk without changing a single line of our application code."
 
-## Scene 5: Conclusion (3:00 - 3:30)
-**Visual**: A side-by-side comparison of the scan results and security features.
-**Audio**: "The technical advantages are clear. Transitioning to Docker Hardened Images provides a secure-by-default environment that is both compliant and performant. Implementing DHI is a fundamental step for any organization prioritizing production security."
-
-## Outro
-**Visual**: Text displaying 'Docker Hardened Images: Security by Default'.
-**Audio**: "For further details on securing your container supply chain, refer to the documentation provided in the project repository."
+## Conclusion (2:45 - 3:00)
+**Visual**: A side-by-side of the two UIs.
+**Audio**: "That is the power of Docker Hardened Images. Security by design. Secure by default."

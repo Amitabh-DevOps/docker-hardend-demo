@@ -1,23 +1,22 @@
-# BEFORE: Standard/Non-Hardened Dockerfile
-FROM node:18
-
-# Working directory
-WORKDIR /usr/src/app
-
-# Built-in 'root' user is used by default
-# This allows the app to potentially escape or access host resources more easily
-
-# Copy package files
+# STAGE 1: THE KITCHEN (Standard Build)
+# We use a standard image to install dependencies.
+FROM node:18 AS build
+WORKDIR /app
 COPY app/package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy application source
-COPY app ./
+# STAGE 2: THE "STANDARD HOUSE" (Runtime)
+# Even with a multi-stage build, this image remains an "Open House"
+# because the base image is still a standard, bloated Linux distribution.
+FROM node:18
+WORKDIR /app
+
+# Copy results from the Kitchen
+COPY --from=build /app/node_modules ./node_modules
+COPY app/ .
 
 # Expose port
 EXPOSE 3000
 
-# Start command
-CMD [ "npm", "start" ]
+# Runs as ROOT by default (The security risk)
+CMD ["node", "index.js"]
