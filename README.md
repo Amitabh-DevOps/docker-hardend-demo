@@ -45,6 +45,13 @@ sudo apt-get update
 sudo apt-get install trivy
 ```
 
+### 4. Socket API Key (Required for Advanced DHI)
+The advanced `sfw-ent-dev` image variant uses the Socket Firewall to protect against malicious packages during installation. To use it, you must obtain a free API key:
+1. Create a free account at [Socket.dev](https://socket.dev).
+2. Navigate to your **Organization Settings** or **API Keys** section.
+3. Generate a new API Key.
+4. Keep this key ready for the build process.
+
 ## Running the Demonstration
 
 ### 1. Clone this repository
@@ -62,11 +69,18 @@ docker run -p 3000:3000 app-standard
 Access the application at `http://[your-ec2-ip]:3000`.
 
 ### 3. Hardened Deployment
-Authenticate with the DHI registry and execute the secured image:
+Authenticate with the DHI registry and execute the secured image. Note that this advanced image requires the `SOCKET_API_KEY` build argument.
+
 ```bash
 # Log in with your Docker Hub credentials
 docker login dhi.io
-docker build -t app-hardened -f Dockerfile.hardened .
+
+# Build with your Socket API Key
+docker build -t app-hardened \
+  --build-arg SOCKET_API_KEY=your_socket_api_key_here \
+  -f Dockerfile.hardened .
+
+# Run the container
 docker run -p 3000:3000 app-hardened
 ```
 Access the application at `http://[your-ec2-ip]:3000`.

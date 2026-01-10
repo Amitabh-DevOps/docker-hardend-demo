@@ -1,6 +1,11 @@
-# AFTER: Hardened Dockerfile (DHI)
+# AFTER: Hardened Dockerfile (DHI with Socket Firewall)
 # Using official Docker Hardened Image from dhi.io
+# This variant includes the Socket Firewall for proactive package protection
 FROM dhi.io/node:25-debian13-sfw-ent-dev
+
+# Required for the Socket Firewall during npm install
+ARG SOCKET_API_KEY
+ENV SOCKET_API_KEY=$SOCKET_API_KEY
 
 # Set working directory
 WORKDIR /app
