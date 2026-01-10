@@ -1,12 +1,18 @@
 {
-  "name": "docker-hardened-demo",
-  "version": "1.0.0",
-  "description": "Demo for Docker Hardened Images",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2"
-  }
+    "name": "dhi-demo-app",
+    "version": "1.0.0",
+    "description": "Security Health Dashboard for DHI Demonstration",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node --watch server.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2"
+    },
+    "engines": {
+        "node": ">=20.0.0"
+    },
+    "author": "Technical Demonstration Team",
+    "license": "MIT"
 }
