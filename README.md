@@ -54,7 +54,7 @@ Navigate to:
 - **Hardened Image**: [http://localhost:3002](http://localhost:3002)
 
 ### 4. Comparison Exercises
-- **Attack Surface Scan**: Click "Run Diagnostic Scan". Observe how `sh`, `curl`, and `apt` are "Present" in Standard but "Absent" in Hardened.
+- **Attack Surface Scan**: Click "Run Diagnostic Scan". Observe how `sh`, `bash`, and `apt` are "Present" in Standard but "Absent" in Hardened.
 - **Command Execution**: Try running `whoami` or `ls`. In the DHI container, this will fail because there is no shell to interpret the command.
 - **User Check**: Observe the "User" field in Environment Specs. Standard defaults to `root`, while DHI defaults to `node`.
 
