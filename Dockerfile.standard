@@ -1,0 +1,23 @@
+# BEFORE: Standard/Non-Hardened Dockerfile
+FROM node:18
+
+# Working directory
+WORKDIR /usr/src/app
+
+# Built-in 'root' user is used by default
+# This allows the app to potentially escape or access host resources more easily
+
+# Copy package files
+COPY app/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy application source
+COPY app ./
+
+# Expose port
+EXPOSE 3000
+
+# Start command
+CMD [ "npm", "start" ]

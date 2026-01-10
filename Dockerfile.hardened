@@ -1,0 +1,25 @@
+# AFTER: Hardened Dockerfile (DHI)
+# Using official Docker Hardened Image from dhi.io
+FROM dhi.io/node:25-debian13-sfw-ent-dev
+
+# Set working directory
+WORKDIR /app
+
+# DHI images are often pre-configured with security in mind.
+# We explicitly switch to the 'node' user provided in the image.
+USER node
+
+# Copy package files (ensure proper ownership)
+COPY --chown=node:node app/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy application source (ensure proper ownership)
+COPY --chown=node:node app ./
+
+# Expose port
+EXPOSE 3000
+
+# Start command
+CMD [ "npm", "start" ]
