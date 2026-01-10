@@ -82,13 +82,13 @@ To technically verify the security improvements, use Trivy to scan both images a
 
 ### 1. Scan the Standard Image
 ```bash
-trivy image app-standard
+trivy image --scanners vuln --vex repo app-standard > standard_scan_results.txt
 ```
 This scan will typically reveal a significant number of vulnerabilities inherited from the standard base image.
 
 ### 2. Scan the Hardened Image
 ```bash
-trivy image app-hardened
+trivy image --scanners vuln --vex repo app-hardened > hardened_scan_results.txt
 ```
 The scan of the hardened image should result in zero or minimal high/critical vulnerabilities, demonstrating the effectiveness of utilizing DHI.
 
@@ -101,6 +101,3 @@ Standard images include a shell and package managers, allowing `npm install` to 
 
 ### 2. Shell Removal
 The production image does not contain `/bin/sh` or `/bin/bash`. This prevents "living off the land" attacks where an intruder uses built-in tools to move laterally through your network.
-
----
-*Developed for educational purposes regarding container security and best practices.*
