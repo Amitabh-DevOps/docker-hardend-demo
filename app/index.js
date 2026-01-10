@@ -192,17 +192,17 @@ app.get('/', (req, res) => {
 
         <div class="features">
             <div class="feature-card" style="border-color: ${securityStatus.isNonRoot ? 'var(--hardened)' : 'var(--standard)'}">
-                <div class="feature-icon">${securityStatus.isNonRoot ? '✅' : '🚨'}</div>
+                <div class="feature-icon">[Identity]</div>
                 <div class="feature-title">Identity: ${securityStatus.isNonRoot ? 'Non-Root' : 'Root User'}</div>
                 <div class="feature-desc">${securityStatus.isNonRoot ? 'Process is running with restricted privileges.' : 'CRITICAL: Process is running with full root access.'}</div>
             </div>
             <div class="feature-card" style="border-color: ${securityStatus.hasNoShell ? 'var(--hardened)' : 'var(--standard)'}">
-                <div class="feature-icon">${securityStatus.hasNoShell ? '✅' : '🚨'}</div>
+                <div class="feature-icon">[Environment]</div>
                 <div class="feature-title">Shell: ${securityStatus.hasNoShell ? 'Removed' : 'Available'}</div>
                 <div class="feature-desc">${securityStatus.hasNoShell ? 'No /bin/sh found. Minimal attack surface.' : 'WARNING: Shell is available for potential exploits.'}</div>
             </div>
             <div class="feature-card" style="border-color: ${securityStatus.minimalBinaries ? 'var(--hardened)' : 'var(--standard)'}">
-                <div class="feature-icon">${securityStatus.minimalBinaries ? '✅' : '🚨'}</div>
+                <div class="feature-icon">[Security]</div>
                 <div class="feature-title">Binaries: ${securityStatus.minimalBinaries ? 'Minimal' : 'Bloated'}</div>
                 <div class="feature-desc">${securityStatus.minimalBinaries ? 'No risky tools (curl/apt) detected.' : 'DANGER: Attacker tools like curl/apt are present.'}</div>
             </div>
@@ -219,7 +219,7 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
     console.log(`-----------------------------------------------`);
-    console.log(`🚀 App listening at http://localhost:${port}`);
-    console.log(`🛡️  Hardening Status: ${IS_HARDENED ? 'ENABLED (DHI)' : 'DISABLED (Standard)'}`);
+    console.log(`App listening at http://localhost:${port}`);
+    console.log(`Hardening Status: ${IS_HARDENED ? 'ENABLED (DHI)' : 'DISABLED (Standard)'}`);
     console.log(`-----------------------------------------------`);
 });

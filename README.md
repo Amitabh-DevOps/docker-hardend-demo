@@ -23,7 +23,6 @@ Update the local package index and install necessary dependencies:
 ```bash
 sudo apt-get update
 sudo apt-get upgrade -y
-sudo apt-get install -y ca-certificates curl gnupg lsb-release
 ```
 
 ### 2. Install Docker
@@ -33,26 +32,28 @@ sudo apt-get install -y docker.io
 sudo systemctl start docker
 sudo systemctl enable docker
 # Allow current user to run docker commands without sudo
-sudo usermod -aG docker $USER
-# Note: Log out and log back in for group changes to take effect
+sudo usermod -aG docker $USER && newgrp docker
 ```
 
 ### 3. Install Trivy
 Trivy is used for vulnerability scanning. Install it using the following commands:
 ```bash
-sudo apt-get install -y wget apt-transport-https gnupg
-wget -qO - https://aquasecurity.github.io/trivy-repo/dabest/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
-echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/dabest/almalinux/9/ x86_64 main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-# Alternative official installation for Ubuntu/Debian:
-wget -qO - https://aquasecurity.github.io/trivy-repo/dabest/public.key | sudo apt-key add -
-echo deb https://aquasecurity.github.io/trivy-repo/dabest/ $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+sudo apt-get install wget gnupg
+wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
 sudo apt-get update
-sudo apt-get install -y trivy
+sudo apt-get install trivy
 ```
 
 ## Running the Demonstration
 
-### 1. Standard Deployment
+### 1. Clone this repository
+```bash
+git clone https://github.com/Amitabh-DevOps/docker-hardend-demo.git
+cd docker-hardend-demo
+```
+
+### 2. Standard Deployment
 Build and execute the standard image to observe security warnings:
 ```bash
 docker build -t app-standard -f Dockerfile.standard .
@@ -60,7 +61,7 @@ docker run -p 3000:3000 app-standard
 ```
 Access the application at `http://[your-ec2-ip]:3000`.
 
-### 2. Hardened Deployment
+### 3. Hardened Deployment
 Authenticate with the DHI registry and execute the secured image:
 ```bash
 # Log in with your Docker Hub credentials
@@ -69,6 +70,22 @@ docker build -t app-hardened -f Dockerfile.hardened .
 docker run -p 3000:3000 app-hardened
 ```
 Access the application at `http://[your-ec2-ip]:3000`.
+
+## Vulnerability Scanning with Trivy
+
+To technically verify the security improvements, use Trivy to scan both images and compare the results.
+
+### 1. Scan the Standard Image
+```bash
+trivy image app-standard
+```
+This scan will typically reveal a significant number of vulnerabilities inherited from the standard base image.
+
+### 2. Scan the Hardened Image
+```bash
+trivy image app-hardened
+```
+The scan of the hardened image should result in zero or minimal high/critical vulnerabilities, demonstrating the effectiveness of utilizing DHI.
 
 ## Real-time Security Probes
 The application performs active environment detection for the following:
