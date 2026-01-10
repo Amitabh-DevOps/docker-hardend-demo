@@ -23,34 +23,51 @@ The transition to Docker Hardened Images provides several critical security adva
 3. **Continuous Remediation**: These images are continuously scanned and updated to maintain a near-zero exploitable CVE (Common Vulnerabilities and Exposures) status.
 4. **Secure-by-Default Configuration**: DHIs are pre-configured with security best practices, such as running applications as a non-root user and hardening OS kernel interfaces.
 
-## Deployment Instructions
+## Deployment on AWS EC2 (Ubuntu)
 
-### Prerequisites
-- Docker Engine installed.
-- Access to the `dhi.io` registry.
+Follow these steps to deploy the demonstration on an Ubuntu-based AWS EC2 instance.
 
-### Building the Standard Image
+### 1. Prerequisites
+Ensure your EC2 instance has Docker installed. If not, run the following:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y docker.io
+sudo systemctl start docker
+sudo usermod -aG docker $USER && newgrp docker
+```
+
+### 2. Network Configuration
+Ensure your EC2 Security Group allows inbound traffic on **Port 3000** (TCP) from your local IP address.
+
+### 3. Repository Preparation
+```bash
+git clone https://github.com/Amitabh-DevOps/docker-hardend-demo.git
+cd docker-hardend-demo
+```
+
+### 4. Build and Run Comparison
+
+#### Standard Image (Baseline)
+Build the standard image that demonstrates a typical attack surface:
 ```bash
 docker build -t dhi-demo:standard -f Dockerfile .
+docker run -d -p 3000:3000 --name standard-app dhi-demo:standard
 ```
 
-### Building the Hardened Image
+#### Hardened Image (DHI)
+Build the hardened image using Docker Hardened Images:
 ```bash
+# Stop the previous container first
+docker stop standard-app && docker rm standard-app
+
 docker build -t dhi-demo:hardened -f Dockerfile.hardened .
+docker run -d -p 3000:3000 --name hardened-app dhi-demo:hardened
 ```
 
-### Running the Demonstration
-To view the security dashboard for either version, run the corresponding image:
-
-```bash
-# Run Standard
-docker run -p 3000:3000 dhi-demo:standard
-
-# Run Hardened
-docker run -p 3000:3000 dhi-demo:hardened
-```
-
-Access the dashboard at `http://localhost:3000`.
+### 5. Accessing the Dashboard
+Open your web browser and navigate to:
+`http://<EC2_PUBLIC_IP>:3000`
 
 ## Analysis and Comparison
 

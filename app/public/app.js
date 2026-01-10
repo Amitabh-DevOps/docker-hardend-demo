@@ -37,6 +37,18 @@ function updateDashboard(data) {
         featureList.appendChild(li);
     });
 
+    // Update Findings
+    const findingsGrid = document.getElementById('findings-grid');
+    if (findingsGrid && data.findings) {
+        findingsGrid.innerHTML = '';
+        Object.entries(data.findings.binaryStatus).forEach(([name, found]) => {
+            const div = document.createElement('div');
+            div.className = `binary-item ${found ? 'found' : 'missing'}`;
+            div.textContent = name;
+            findingsGrid.appendChild(div);
+        });
+    }
+
     // Update System Info
     document.getElementById('runtime-version').textContent = data.systemInfo.nodeVersion;
     document.getElementById('platform-info').textContent = `${data.systemInfo.platform} (${data.systemInfo.architecture})`;

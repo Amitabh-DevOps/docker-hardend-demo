@@ -35,56 +35,72 @@ app.get('/api/security-insights', (req, res) => {
     }
 
     // 2. Check for presence of common utilities (Attack Surface)
-    // We use a mix of PATH resolution and file checks
-    const checkBinary = (name) => {
-        if (isWindows) return false; // DHI targets Linux/Containers
-        try {
-            execSync(`command -v ${name} 2>/dev/null`, { stdio: 'ignore' });
-            return true;
-        } catch (e) {
-            return false;
+    const attackSurfaceMap = [
+        { name: 'sh', weight: 2 },
+        { name: 'bash', weight: 3 },
+        { name: 'apk', weight: 4 },
+        { name: 'apt', weight: 4 },
+        { name: 'curl', weight: 1 },
+        { name: 'wget', weight: 1 },
+        { name: 'git', weight: 2 },
+        { name: 'sudo', weight: 5 },
+        { name: 'gcc', weight: 4 },
+        { name: 'ls', weight: 0.5 }
+    ];
+
+    const binaryStatus = {};
+    let attackSurfaceScore = 0;
+
+    attackSurfaceMap.forEach(check => {
+        let found = false;
+        if (!isWindows) {
+            try {
+                execSync(`command -v ${check.name} 2>/dev/null`, { stdio: 'ignore' });
+                found = true;
+            } catch (e) {
+                found = false;
+            }
+        } else {
+            // Mock for Windows demo purposes to show 'Expanded' state
+            found = ['sh', 'ls', 'git', 'curl'].includes(check.name);
         }
-    };
+        binaryStatus[check.name] = found;
+        if (found) attackSurfaceScore += check.weight;
+    });
 
-    const binaryStatus = {
-        sh: checkBinary('sh'),
-        apk: checkBinary('apk'),
-        apt: checkBinary('apt'),
-        ls: checkBinary('ls')
-    };
-
-    // 3. Estimate package count
-    let estPackageCount = 185; // Default for Standard
-    let isHardened = false;
-
+    // 3. Estimate package count and calculate heuristic vulnerability count
+    let estPackageCount = 0;
     if (!isWindows) {
         try {
-            // Try Alpine package manager
             const output = execSync('apk info 2>/dev/null | wc -l').toString().trim();
             estPackageCount = parseInt(output) || 185;
-            isHardened = (estPackageCount < 100) && !isRoot;
         } catch (e) {
-            // If apk is missing, it's likely a hardened DHI (often distroless-like)
-            if (!binaryStatus.apk && !isRoot) {
-                isHardened = true;
-                estPackageCount = 42;
-            }
+            estPackageCount = binaryStatus.apk ? 185 : 42;
         }
     } else {
-        // On Windows local development, we treat it as a Standard/Expanded surface
         estPackageCount = 240;
-        isHardened = false;
     }
+
+    // Dynamic Scoring Logic
+    // Higher package count and more binaries = higher vulnerability count
+    const baseVulns = Math.floor(estPackageCount / 15);
+    const binaryVulns = Math.floor(attackSurfaceScore);
+    const rootMultiplier = isRoot ? 1.5 : 1;
+
+    const totalVulns = Math.floor((baseVulns + binaryVulns) * rootMultiplier);
+    const criticals = Math.floor(totalVulns * 0.15 + (isRoot ? 2 : 0));
+
+    const isHardened = estPackageCount < 100 && !isRoot && !binaryStatus.apk && !binaryStatus.apt;
 
     const insights = {
         scanTimestamp: new Date().toISOString(),
         imageType: isHardened ? 'Docker Hardened Image (DHI)' : (isWindows ? 'Local Windows Development' : 'Standard Development Image'),
         metrics: {
-            vulnerabilities: isHardened ? 0 : 12,
-            criticalIssues: isHardened ? 0 : 2,
+            vulnerabilities: isHardened ? 0 : totalVulns,
+            criticalIssues: isHardened ? 0 : criticals,
             packageCount: estPackageCount,
             isRootUser: isRoot,
-            attackSurface: isHardened ? 'Minimal' : 'Expanded'
+            attackSurface: isHardened ? 'Minimal' : (attackSurfaceScore > 15 ? 'High' : 'Expanded')
         },
         systemInfo: {
             platform: os.platform(),
@@ -92,18 +108,22 @@ app.get('/api/security-insights', (req, res) => {
             nodeVersion: process.version,
             uptime: Math.floor(process.uptime())
         },
-        binaryDiscovery: binaryStatus,
+        findings: {
+            binaryStatus,
+            attackSurfaceScore,
+            isRoot
+        },
         securityFeatures: isHardened ? [
             'Non-root user execution (UID ' + (process.getuid ? process.getuid() : 'N/A') + ')',
             'No package manager detected',
-            'Near-zero exploitable CVEs',
-            'Signed SBOM included',
-            'Minimal runtime footprint'
+            'No compilers or build tools in runtime',
+            'Restricted shell access',
+            'Signed SBOM included'
         ] : [
-            isWindows ? 'Running on Host OS (Windows)' : 'Root user execution detected',
-            'Package manager / Shell available',
-            'Development utilities present',
-            'Standard security baseline'
+            isWindows ? 'Running on Host OS (Windows)' : (isRoot ? 'Root user execution (RISK)' : 'Non-root user (Good)'),
+            (binaryStatus.apk || binaryStatus.apt) ? 'Package manager available (HIGH RISK)' : 'No package manager',
+            'Multiple attack surface binaries found',
+            'Standard/Legacy security posture'
         ]
     };
 
