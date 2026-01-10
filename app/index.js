@@ -6,7 +6,10 @@ const port = 3000;
 
 // Security Probe: Who am I?
 function getIdentity() {
-    const uid = process.getuid();
+    const uid = process.getuid ? process.getuid() : -1;
+    if (uid === -1) {
+        return { label: "Local Test (OS Restricted)", status: "success" };
+    }
     return {
         isRoot: uid === 0,
         label: uid === 0 ? "ROOT (Unsafe)" : `User ID: ${uid} (Secure)`,
