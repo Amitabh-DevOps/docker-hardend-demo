@@ -10,9 +10,9 @@ The demonstration compares two primary container states:
 
 ## Project Structure
 
-- `/app`: Source code for the security-aware demonstration interface.
+- `app/`: Source code for the security-aware demonstration interface.
 - `Dockerfile.standard`: Configuration for a non-hardened environment.
-- `Dockerfile.hardened`: Configuration for a secured environment using dhi.io.
+- `Dockerfile.hardened`: Optimized multi-stage configuration for a secured, shell-less environment using dhi.io.
 
 ## Environment Setup (EC2 Ubuntu)
 
@@ -92,11 +92,15 @@ trivy image app-hardened
 ```
 The scan of the hardened image should result in zero or minimal high/critical vulnerabilities, demonstrating the effectiveness of utilizing DHI.
 
-## Real-time Security Probes
-The application performs active environment detection for the following:
-- **Identity Verification**: Checks if the process is running as root (UID 0).
-- **Surface Analysis**: Probes for the availability of /bin/sh or /bin/bash.
-- **Binary Detection**: Scans for common tools such as curl, apt, or yum.
+## Technical Deep Dive: Attack Surface Reduction
+
+The hardened image (`dhi.io/node:25`) is designed with a **zero-trust** approach. This introduces specific technical differences highlighted in the demonstration:
+
+### 1. Multi-Stage Build Strategy
+Standard images include a shell and package managers, allowing `npm install` to run directly. Hardened images remove these tools to prevent attackers from downloading or executing malicious scripts. We use a **Multi-Stage Build** to install dependencies in a standard environment and copy them into the secure runtime.
+
+### 2. Shell Removal
+The production image does not contain `/bin/sh` or `/bin/bash`. This prevents "living off the land" attacks where an intruder uses built-in tools to move laterally through your network.
 
 ---
 *Developed for educational purposes regarding container security and best practices.*

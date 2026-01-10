@@ -1,26 +1,25 @@
-# AFTER: Hardened Dockerfile (DHI)
-# Using official Docker Hardened Image from dhi.io
-# Tag selected: 25
+# STAGE 1: Build environment
+# We use a standard image to install dependencies because hardened images often lack the shell (/bin/sh) required by npm/sh processes.
+FROM node:22-slim AS build
+WORKDIR /app
+COPY app/package*.json ./
+RUN npm install --production
+
+# STAGE 2: Production environment (Hardened)
+# We transfer the pre-built application into the highly secure, shell-less DHI environment.
 FROM dhi.io/node:25
 
 # Set working directory
 WORKDIR /app
 
-# DHI images are often pre-configured with security in mind.
-# We explicitly switch to the 'node' user provided in the image.
+# Copy application and pre-installed dependencies from the build stage
+# DHI images use the 'node' user (UID 1000)
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --chown=node:node app/ .
+
+# Secure permissions
 USER node
 
-# Copy package files (ensure proper ownership)
-COPY --chown=node:node app/package*.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy application source (ensure proper ownership)
-COPY --chown=node:node app ./
-
-# Expose port
+# Start the application using EXEC form (Avoids shell requirement)
 EXPOSE 3000
-
-# Start command
-CMD [ "npm", "start" ]
+CMD ["node", "index.js"]
