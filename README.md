@@ -46,6 +46,15 @@ git clone https://github.com/Amitabh-DevOps/docker-hardend-demo.git
 cd docker-hardend-demo
 ```
 
+## Project Structure
+
+- `app/`: Directory containing all application source code.
+    - `app.js`: Express server with security diagnostic endpoints.
+    - `package.json`: Application dependencies and scripts.
+    - `public/`: Modern dashboard files.
+- `Dockerfile.standard`: Uses a multi-stage build with `node:24`.
+- `Dockerfile.hardened`: Follows the official DHI workflow with `dhi.io/node:24-dev` and `dhi.io/node:24`.
+
 ### 3. Build & Run the Demo
 
 #### Build the Images

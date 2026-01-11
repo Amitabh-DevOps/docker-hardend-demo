@@ -4,9 +4,11 @@
 # 1. Start with a hardened, verified base image (Stage 1: Build)
 FROM dhi.io/node:24-dev AS build-stage
 WORKDIR /app
-COPY package*.json ./
+# Copy package files from the app directory
+COPY app/package*.json ./
 RUN npm install --omit=dev
-COPY . .
+# Copy the rest of the app content
+COPY app/ ./
 
 # 2. Runtime stage (Stage 2: Production)
 FROM dhi.io/node:24
