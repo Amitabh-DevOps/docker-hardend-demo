@@ -176,6 +176,14 @@ docker scout attest get dhi.io/node:24 \
   --verify
 ```
 
+#### Quick Proof of Authenticity (Concise Output)
+If you want to show someone that the image is official without showing the long JSON output, you can filter for the verification status:
+
+```bash
+docker scout attest get dhi.io/node:24 --predicate-type https://scout.docker.com/sbom/v0.1 --verify 2>&1 | grep -i "verified"
+```
+This will return a clean, one-line confirmation that the cryptographic signature is valid and official.
+
 ---
 
 ## Cleanup
