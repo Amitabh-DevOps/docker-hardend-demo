@@ -40,9 +40,14 @@ sudo systemctl enable docker
 # Add your user to the docker group (to run without sudo):
 # NOTE: Log out and log back in for this change to take effect!
 sudo usermod -aG docker $USER && newgrp docker
+
+# 2. Install Docker Scout (Optional but Recommended)
+# Docker Scout is used to verify SBOMs and Provenance from DHI.
+curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh -o install-scout.sh
+sh install-scout.sh
 ```
 
-### 2. Authenticate with DHI Registry
+### 3. Authenticate with DHI Registry
 
 You will need your DHI credentials to pull the hardened images from the official registry.
 
@@ -50,7 +55,9 @@ You will need your DHI credentials to pull the hardened images from the official
 docker login dhi.io
 ```
 
-### 3. Prepare the Demo
+Enter your docker hub credentials when prompted.
+
+### 4. Prepare the Demo
 
 Clone the repository and move into the project directory:
 
@@ -68,7 +75,7 @@ cd docker-hardend-demo
 - `Dockerfile.standard`: Uses a multi-stage build with `node:24`.
 - `Dockerfile.hardened`: Follows the official DHI workflow with `dhi.io/node:24-dev` and `dhi.io/node:24`.
 
-### 4. Build & Run the Demo
+### 5. Build & Run the Demo
 
 #### Build the Images
 ```bash
@@ -123,23 +130,50 @@ Try running `ls` or `whoami` in the **Command Execution Diagnostic** box.
 
 ---
 
-## Supply Chain Transparency (DHI)
+## Supply Chain Security and Transparency (DHI)
 
-DHI images provide verifiable metadata that standard images lack.
+Docker Hardened Images (DHI) move beyond standard images by including built-in, cryptographically signed Software Bills of Materials (SBOMs). This ensures a transparent, tamper-proof inventory of every component in your image.
 
-### 1. Initialize Advanced Builder
+### 1. The Value of Signed SBOMs
+- **Full Transparency**: Every DHI includes a complete list of libraries and dependencies, including versions and licenses.
+- **Tamper-Proof Verification**: SBOMs are signed, allowing you to prove the image's authenticity and integrity.
+- **Vulnerability Management**: A detailed inventory allows for precise identification of CVEs using tools like Docker Scout.
+- **Compliance Ready**: Built-in support for SLSA Level 3 provenance and VEX helps meet strict regulatory standards.
+
+### 2. Hands-on: Working with DHI metadata
+
+To see these features in action, we first need to use a builder that supports these "attestations".
+
+#### Initialize Advanced Builder
 ```bash
 docker buildx create --name secure-builder --use
 docker buildx inspect --bootstrap
 ```
 
-### 2. Generate and Inspect SBOM
+#### Generate a Local SBOM
+Unlike standard images, we can generate a verifiable inventory during the build process:
 ```bash
 # Build with SBOM generation
 docker buildx build -f Dockerfile.hardened -t dhi-demo:hardened --sbom=1 --output type=local,dest=./security-assets .
 
-# Inspect the SBOM file
+# Inspect the raw SBOM file
 cat ./security-assets/sbom.spdx.json
+```
+
+#### Verify Authenticity via Docker Scout
+For official DHI images, you can verify the signed inventory directly from the registry:
+
+```bash
+# View the live SBOM
+docker scout sbom dhi.io/node:24
+
+# Login with Docker Hub credentials
+docker login
+
+# Verify the cryptographic signature (Integrity check)
+docker scout attest get dhi.io/node:24 \
+  --predicate-type https://scout.docker.com/sbom/v0.1 \
+  --verify
 ```
 
 ---
