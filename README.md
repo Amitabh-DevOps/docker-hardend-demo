@@ -200,6 +200,10 @@ This will show the "Near-Zero CVE" status of the hardened base.
 docker scout cves dhi-demo:hardened
 ```
 
+> [!NOTE]
+> **Interpreting Results: Near-Zero vs. Zero CVE**
+> You may still see a few **"Low"** severity vulnerabilities (such as `CVE-2010-0928`). These are often legacy or hardware-specific issues (e.g., targeting niche FPGA chips) that cannot be exploited in cloud environments. DHI prioritizes eliminating **Critical, High, and Medium** vulnerabilities that represent actionable risks.
+
 ---
 
 ## Cleanup
