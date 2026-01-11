@@ -184,6 +184,22 @@ docker scout attest get dhi.io/node:24 --predicate-type https://scout.docker.com
 ```
 This will return a clean, one-line confirmation that the cryptographic signature is valid and official.
 
+### 3. CVE Vulnerability Comparison
+
+One of the most powerful features of DHI is its near-zero CVE status. You can compare the vulnerability profiles of the two images directly:
+
+#### Scan the Standard Image
+This will typically show dozens or hundreds of vulnerabilities from the full OS base.
+```bash
+docker scout cves dhi-demo:standard
+```
+
+#### Scan the Hardened (DHI) Image
+This will show the "Near-Zero CVE" status of the hardened base.
+```bash
+docker scout cves dhi-demo:hardened
+```
+
 ---
 
 ## Cleanup
