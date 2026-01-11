@@ -13,32 +13,45 @@ While you *can* use `sudo apt install docker.io`, it is highly recommended to us
 
 ```bash
 # Add Docker's official GPG key:
-sudo apt-get update
-sudo apt-get install ca-certificates curl
+sudo apt update
+sudo apt install ca-certificates curl
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 
 # Add the repository to Apt sources:
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get update
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+sudo apt update
 
 # Install Docker and Buildx:
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 # Start Docker and enable it:
 sudo systemctl start docker
 sudo systemctl enable docker
 
 # Add your user to the docker group (to run without sudo):
-sudo usermod -aG docker $USER
 # NOTE: Log out and log back in for this change to take effect!
+sudo usermod -aG docker $USER && newgrp docker
 ```
 
-### 2. Prepare the Demo
+### 2. Authenticate with DHI Registry
+
+You will need your DHI credentials to pull the hardened images from the official registry.
+
+```bash
+docker login dhi.io
+```
+
+### 3. Prepare the Demo
+
 Clone the repository and move into the project directory:
 
 ```bash
@@ -55,7 +68,7 @@ cd docker-hardend-demo
 - `Dockerfile.standard`: Uses a multi-stage build with `node:24`.
 - `Dockerfile.hardened`: Follows the official DHI workflow with `dhi.io/node:24-dev` and `dhi.io/node:24`.
 
-### 3. Build & Run the Demo
+### 4. Build & Run the Demo
 
 #### Build the Images
 ```bash
