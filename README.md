@@ -204,6 +204,21 @@ docker scout cves dhi-demo:hardened
 > **Interpreting Results: Near-Zero vs. Zero CVE**
 > You may still see a few **"Low"** severity vulnerabilities (such as `CVE-2010-0928`). These are often legacy or hardware-specific issues (e.g., targeting niche FPGA chips) that cannot be exploited in cloud environments. DHI prioritizes eliminating **Critical, High, and Medium** vulnerabilities that represent actionable risks.
 
+### Exercise 3: Security Recommendations
+
+Finally, see what Docker thinks you should do to fix each image:
+
+```bash
+# Check standard image (Prepare for a long list of suggestions!)
+docker scout recommendations dhi-demo:standard
+
+# Check hardened image
+docker scout recommendations dhi-demo:hardened
+```
+
+- **Standard**: Scout will recommend switching to "slim" variants, updating packages, and removing hundreds of MBs of bloat.
+- **Hardened**: Scout will return `image has no base image` or zero recommendations. This is a **win**—it means the image is so minimal and optimized that there is nothing left to "fix" or "strip away".
+
 ---
 
 ## Cleanup
