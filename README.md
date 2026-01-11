@@ -237,14 +237,6 @@ Observe the **"Security Health Score"** gauge at the top of both dashboards.
 
 ---
 
-## Automated Security (GitHub Actions)
-
-This project includes a `.github/workflows/verify.yml` file that demonstrates how to implement **"Hard Gates"** in your CI/CD pipeline. It automatically:
-1.  **Verifies DHI Signatures**: Ensures the base image hasn't been tampered with.
-2.  **Enforces Quality**: Fails the build if **High** or **Critical** vulnerabilities are detected.
-
----
-
 ## Cleanup
 ```bash
 docker stop demo-standard demo-hardened
