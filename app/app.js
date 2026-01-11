@@ -28,7 +28,7 @@ app.get('/api/env', (req, res) => {
 // Endpoint to simulate an attack surface scan
 // It tries to check if common binaries exist
 app.get('/api/scan', (req, res) => {
-    const tools = ['sh', 'bash', 'ls', 'curl', 'apt', 'apk', 'npm', 'node'];
+    const tools = ['sh', 'bash', 'ls', 'curl', 'apt', 'sudo', 'npm', 'node'];
     const results = {};
 
     let completed = 0;
@@ -40,6 +40,29 @@ app.get('/api/scan', (req, res) => {
                 res.json(results);
             }
         });
+    });
+});
+
+// Endpoint to test privilege escalation (writing to root dir)
+app.get('/api/test-privilege', (req, res) => {
+    const filePath = '/root/dhi_breach_test.txt';
+    const content = `Breach attempt at ${new Date().toISOString()}`;
+    
+    // Attempting to write to a restricted directory
+    exec(`echo "${content}" > ${filePath}`, (error, stdout, stderr) => {
+        if (error) {
+            res.json({
+                success: false,
+                message: 'Access Denied: Cannot write to /root',
+                error: error.message
+            });
+        } else {
+            res.json({
+                success: true,
+                message: 'VULNERABILITY CONFIRMED: Successfully wrote to /root',
+                filePath: filePath
+            });
+        }
     });
 });
 

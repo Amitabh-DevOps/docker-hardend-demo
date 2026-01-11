@@ -52,6 +52,8 @@ The shift to Docker Hardened Images is about more than just security—it's abou
 - **Reduced Overhead**: Security teams save hundreds of hours by not having to investigate "unreachable" CVEs in unnecessary OS packages.
 - **Operational Trust**: Knowing that your production environment is tamper-proof and minimal gives teams the confidence to deploy faster and more frequently.
 
+---
+
 ## Conclusion
 
 Security is no longer an "afterthought" or a separate layer—it must be baked into the foundation of our infrastructure. Docker Hardened Images provide that foundation. By embracing minimalism, transparency, and cryptographic trust, DHI isn't just hardening your containers; it's hardening your entire software supply chain.

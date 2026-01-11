@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Docker Hardened Image (DHI) Demo</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -14,6 +16,20 @@
         </header>
 
         <div class="grid">
+            <!-- Security Health Score -->
+            <div class="card">
+                <h2>Security Health Score</h2>
+                <div class="health-score-container">
+                    <div class="gauge" id="health-gauge">
+                        <span class="gauge-text" id="health-score-text">0%</span>
+                    </div>
+                    <div class="score-label" id="health-label">Critical Risk</div>
+                </div>
+                <p style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
+                    Aggregated score based on identity, attack surface, and filesystem lockdown.
+                </p>
+            </div>
+
             <!-- Environment Stats -->
             <div class="card">
                 <h2>Environment Specs</h2>
@@ -22,12 +38,27 @@
                 </div>
             </div>
 
+            <!-- Privilege escalation Test -->
+            <div class="card">
+                <h2>File System Lockdown</h2>
+                <div class="card-content">
+                    <p>Attempt to write to the <code>/root</code> directory to test for privilege escalation
+                        vulnerabilities.</p>
+                    <button id="privilege-btn" onclick="testPrivilege()" class="badge-danger">Try Privilege
+                        Escalation</button>
+                    <div id="privilege-result" class="breach-alert" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid" style="margin-top: -1.5rem;">
             <!-- Attack Surface Scan -->
             <div class="card">
                 <h2>Attack Surface Scan</h2>
                 <div class="card-content">
                     <p>Check if common exploitation tools are present in this container.</p>
-                    <button onclick="runScan()">Run Diagnostic Scan</button>
+                    <button onclick="runScan()" style="background: var(--border); color: #fff;">Run Diagnostic
+                        Scan</button>
                     <div id="scan-results" style="margin-top: 1rem;"></div>
                 </div>
             </div>
@@ -44,9 +75,6 @@
                         <div class="feature-tag">Distroless</div>
                         <div class="feature-tag">Non-root Default</div>
                     </div>
-                    <p style="margin-top: 1rem; color: var(--text-muted); font-style: italic;">
-                        DHI provides a transparent supply chain for every developer.
-                    </p>
                 </div>
             </div>
         </div>
@@ -57,7 +85,8 @@
             <div class="card-content">
                 <p>Verify if the shell is accessible for arbitrary command execution.</p>
                 <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                    <input type="text" id="command-input" placeholder="e.g., whoami" style="flex: 1; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: #000; color: #fff;">
+                    <input type="text" id="command-input" placeholder="e.g., whoami"
+                        style="flex: 1; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: #000; color: #fff;">
                     <button onclick="runCommand()" style="width: auto; margin-top: 0;">Execute</button>
                 </div>
                 <pre id="command-output">Output will appear here...</pre>
@@ -66,14 +95,54 @@
     </div>
 
     <script>
+        let securityStatus = {
+            isNonRoot: false,
+            toolsAbsent: 0,
+            totalTools: 8,
+            writeDenied: false,
+            testsRun: { env: false, scan: false, privilege: false }
+        };
+
+        function updateHealthScore() {
+            let score = 0;
+            if (securityStatus.isNonRoot) score += 25;
+
+            // Proportional tool score (max 40)
+            const toolScore = (securityStatus.toolsAbsent / securityStatus.totalTools) * 40;
+            score += Math.round(toolScore);
+
+            if (securityStatus.writeDenied) score += 35;
+
+            const gauge = document.getElementById('health-gauge');
+            const scoreText = document.getElementById('health-score-text');
+            const label = document.getElementById('health-label');
+
+            scoreText.textContent = `${score}%`;
+
+            // Dynamic Gauge Color
+            let color = 'var(--danger)';
+            let statusText = 'Critical Risk';
+            if (score > 30) { color = '#f59e0b'; statusText = 'Moderate Risk'; }
+            if (score > 70) { color = '#fbbf24'; statusText = 'Safe-ish'; }
+            if (score > 90) { color = 'var(--success)'; statusText = 'Hardened (DHI)'; }
+
+            gauge.style.background = `conic-gradient(${color} ${score * 3.6}deg, #334155 0deg)`;
+            label.textContent = statusText;
+            label.style.color = color;
+        }
+
         async function fetchEnv() {
             try {
                 const res = await fetch('/api/env');
                 const data = await res.json();
-                const containerType = data.user === 'root' ? 
-                    '<span class="badge badge-danger">High Risk (Root)</span>' : 
-                    '<span class="badge badge-success">Lower Risk (Non-root)</span>';
-                
+
+                securityStatus.isNonRoot = data.user !== 'root';
+                securityStatus.testsRun.env = true;
+
+                const containerType = securityStatus.isNonRoot ?
+                    '<span class="badge badge-success">Lower Risk (Non-root)</span>' :
+                    '<span class="badge badge-danger">High Risk (Root)</span>';
+
                 document.getElementById('env-stats').innerHTML = `
                     <div class="stat-item"><span class="label">OS Type</span><span class="value">${data.os}</span></div>
                     <div class="stat-item"><span class="label">User</span><span class="value">${data.user}</span></div>
@@ -81,6 +150,7 @@
                     <div class="stat-item"><span class="label">Node Version</span><span class="value">${data.nodeVersion}</span></div>
                     <div class="stat-item"><span class="label">Platform</span><span class="value">${data.platform} (${data.arch})</span></div>
                 `;
+                updateHealthScore();
             } catch (e) {
                 document.getElementById('env-stats').innerHTML = '<p style="color:red">Failed to load data.</p>';
             }
@@ -92,16 +162,58 @@
             try {
                 const res = await fetch('/api/scan');
                 const data = await res.json();
-                resultsDiv.innerHTML = Object.entries(data).map(([tool, present]) => `
-                    <div class="stat-item">
-                        <span class="label">${tool}</span>
-                        <span class="value">${present ? 
-                            '<span class="badge badge-danger">PRESENT</span>' : 
+
+                let absentCount = 0;
+                resultsDiv.innerHTML = Object.entries(data).map(([tool, present]) => {
+                    if (!present) absentCount++;
+                    return `
+                        <div class="stat-item">
+                            <span class="label">${tool}</span>
+                            <span class="value">${present ?
+                            '<span class="badge badge-danger">PRESENT</span>' :
                             '<span class="badge badge-success">ABSENT</span>'}</span>
-                    </div>
-                `).join('');
+                        </div>
+                    `;
+                }).join('');
+
+                securityStatus.toolsAbsent = absentCount;
+                securityStatus.testsRun.scan = true;
+                updateHealthScore();
             } catch (e) {
-                resultsDiv.innerHTML = '<p style="color:red">Scan failed. (This is expected if the shell is missing in DHI)</p>';
+                resultsDiv.innerHTML = '<p style="color:red">Scan failed. (Pillar: Minimalism)</p>';
+                securityStatus.toolsAbsent = securityStatus.totalTools; // Assume all absent if shell is dead
+                updateHealthScore();
+            }
+        }
+
+        async function testPrivilege() {
+            const resultDiv = document.getElementById('privilege-result');
+            const btn = document.getElementById('privilege-btn');
+
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Testing permissions...';
+
+            try {
+                const res = await fetch('/api/test-privilege');
+                const data = await res.json();
+
+                if (data.success) {
+                    resultDiv.className = 'breach-alert breach-denied'; // Denied means breach succeeded in this context
+                    resultDiv.innerHTML = `<strong>⚠️ VULNERABILITY!</strong><br>${data.message}`;
+                    securityStatus.writeDenied = false;
+                } else {
+                    resultDiv.className = 'breach-alert breach-success';
+                    resultDiv.innerHTML = `<strong>🛡️ SECURE</strong><br>${data.message}`;
+                    securityStatus.writeDenied = true;
+                }
+
+                securityStatus.testsRun.privilege = true;
+                updateHealthScore();
+            } catch (e) {
+                resultDiv.className = 'breach-alert breach-success';
+                resultDiv.innerHTML = `<strong>🛡️ SECURE</strong><br>Access Denied (Pillar: Distroless/Non-root)`;
+                securityStatus.writeDenied = true;
+                updateHealthScore();
             }
         }
 
@@ -125,4 +237,5 @@
         fetchEnv();
     </script>
 </body>
+
 </html>

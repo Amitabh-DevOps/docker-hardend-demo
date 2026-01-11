@@ -219,6 +219,30 @@ docker scout recommendations dhi-demo:hardened
 - **Standard**: Scout will recommend switching to "slim" variants, updating packages, and removing hundreds of MBs of bloat.
 - **Hardened**: Scout will return `image has no base image` or zero recommendations. This is a **win**—it means the image is so minimal and optimized that there is nothing left to "fix" or "strip away".
 
+### Exercise 4: Privilege Escalation (Filesystem Lockdown)
+
+In the dashboard, navigate to the **"File System Lockdown"** section.
+
+1.  Click **"Try Privilege Escalation"** on the **Standard** image dashboard.
+    *   **Result**: ⚠️ **VULNERABILITY CONFIRMED**. You will likely see a success message because the standard image runs as `root`.
+2.  Click **"Try Privilege Escalation"** on the **Hardened** image dashboard.
+    *   **Result**: 🛡️ **SECURE**. The operation is denied because DHI runs as a non-root user (`node`) by default.
+
+### Exercise 5: Security Health Score
+
+Observe the **"Security Health Score"** gauge at the top of both dashboards.
+
+- **Standard Image**: Starts at **0%**. Even after running scans, it stays low because of the `root` user and open attack surface.
+- **Hardened Image**: Starts at a baseline of **25%** (Non-root bonus). As you run the Diagnostic Scan and the Privilege Test, the score will climb toward **100%** as the dashboard verifies the lack of binaries and the locked filesystem.
+
+---
+
+## Automated Security (GitHub Actions)
+
+This project includes a `.github/workflows/verify.yml` file that demonstrates how to implement **"Hard Gates"** in your CI/CD pipeline. It automatically:
+1.  **Verifies DHI Signatures**: Ensures the base image hasn't been tampered with.
+2.  **Enforces Quality**: Fails the build if **High** or **Critical** vulnerabilities are detected.
+
 ---
 
 ## Cleanup
