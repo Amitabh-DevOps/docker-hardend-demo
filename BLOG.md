@@ -38,6 +38,10 @@ Trust is earned, not assumed. DHI images include **Provenance attestations** (fo
 ### 5. Near-Zero CVEs
 By stripping away the "bloat" and using curated, hardened base layers, DHI images typically ship with near-zero vulnerabilities. This allows developers to focus on securing their own code rather than chasing patches for OS-level libraries they never intended to use.
 
+> [!TIP]
+> **The "Near-Zero" Philosophy**
+> In the real world, "Zero CVE" is a moving target. DHI focuses on the **elimination of actionable risk**. While a scan might occasionally show a legacy "Low" severity vulnerability (like a 15-year-old hardware-specific bug), the absence of **Critical and High** vulnerabilities means your true attack surface is effectively neutralized.
+
 ---
 
 ## Why It’s Time to Make the Switch
