@@ -186,7 +186,7 @@ docker scout recommendations dhi-demo:standard
 # Check hardened (Result: "image has no base image")
 docker scout recommendations dhi-demo:hardened
 ```
-*A "Zero Recommendations" result from Scout is a definitive win—it proves the image is already at the peak of optimization.*
+*A "Zero Recommendations" result from Scout is a definitive win - it proves the image is already at the peak of optimization.*
 
 ---
 
